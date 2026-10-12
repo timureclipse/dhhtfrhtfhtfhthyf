@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportTime — Weekly Sports Timetable</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2d;
+      --panel-2: #18233a;
+      --text: #eef3ff;
+      --muted: #9aa8c3;
+      --accent: #8bff6a;
+      --line: #293651;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      background: radial-gradient(ellipse at top right, #1b3151 0, var(--bg) 48%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      max-width: 1200px;
+      margin: auto;
+      padding: 30px 24px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 1.4rem; font-weight: 900; letter-spacing: -.04em; }
+    .brand span { color: var(--accent); }
+    .tag { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+    .today {
+      border: 1px solid var(--line); background: #111a2c; color: var(--text);
+      border-radius: 999px; padding: 10px 14px; font-size: .9rem;
+    }
+    main { max-width: 1200px; margin: auto; padding: 0 24px 44px; }
+    .hero {
+      padding: 30px; border: 1px solid var(--line); border-radius: 24px;
+      background: linear-gradient(120deg, #1b2b45, #131b2d 68%);
+      display: flex; justify-content: space-between; align-items: center; gap: 24px;
+      flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .16em; font-weight: 800; font-size: .75rem; }
+    h1 { font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -.055em; line-height: 1.02; margin: 10px 0; }
+    .hero p { color: var(--muted); margin: 0; max-width: 540px; line-height: 1.6; }
+    .hero-mark { font-size: 5rem; filter: drop-shadow(0 8px 25px #8bff6a22); }
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      flex-wrap: wrap; margin: 24px 0 16px;
+    }
+    .days, .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, select {
+      font: inherit; cursor: pointer; color: var(--text); background: var(--panel);
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px;
+    }
+    button:hover, select:hover { border-color: var(--accent); }
+    button.active { background: var(--accent); color: #10200c; border-color: var(--accent); font-weight: 800; }
+    .section-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin: 26px 0 14px; }
+    h2 { margin: 0; font-size: 1.25rem; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .schedule {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+    }
+    .event {
+      position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 18px; padding: 18px; min-height: 174px; transition: transform .18s, border-color .18s;
+    }
+    .event:hover { transform: translateY(-3px); border-color: #64845f; }
+    .event::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--sport-color, var(--accent)); }
+    .event-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .sport-icon { font-size: 1.6rem; }
+    .sport-tag { color: var(--sport-color, var(--accent)); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .event h3 { margin: 13px 0 7px; font-size: 1.1rem; }
+    .event p { margin: 5px 0; color: var(--muted); font-size: .9rem; }
+    .event-time { color: var(--text) !important; font-weight: 750; }
+    .empty { grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 16px; padding: 32px; text-align: center; color: var(--muted); }
+    .note { margin-top: 22px; padding: 16px 18px; background: #111a2b; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); line-height: 1.55; }
+    footer { max-width: 1200px; margin: auto; padding: 0 24px 28px; color: var(--muted); font-size: .82rem; }
+    @media (max-width: 850px) { .schedule { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 560px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .schedule { grid-template-columns: 1fr; }
+      .hero { padding: 23px; }
+      .hero-mark { display: none; }
+      .days { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+      .days button { padding: 9px 5px; }
+    }
+
+    .planner { margin: 26px 0; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: #111a2b; }
+    .planner-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .planner label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: .88rem; }
+    .planner input, .planner select { width: 100%; min-width: 0; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px; }
+    .planner-actions, .event-actions, .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .planner-actions button:first-child { background: var(--accent); color: #10200c; font-weight: 800; }
+    .event-actions button { padding: 7px 9px; font-size: .82rem; }
+    .event-actions .danger { color: #ff9c9c; }
+    .event.completed { opacity: .7; }
+    .event.completed h3 { text-decoration: line-through; }
+    .status-text { font-size: .82rem !important; }
+    #saveNotice { margin-top: 10px; color: var(--accent); font-size: .85rem; }
+    .backup-actions { margin-top: 10px; }
+    @media (max-width: 700px) { .planner-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 460px) { .planner-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="brand">SPORT<span>TIME</span></div>
+      <div class="tag">Your week. Your game.</div>
+    </div>
+    <div class="today" id="todayLabel">Weekly sports schedule</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Plan your week</div>
+        <h1>Make time<br>for your game.</h1>
+        <p>Explore the weekly sports timetable, find your next match or training session, and keep your active week organized.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true">🏆</div>
+    </section>
+
+    <div class="toolbar">
+      <div class="days" id="dayButtons" aria-label="Choose day">
+        <button class="active" data-day="All">All week</button>
+        <button data-day="Monday">Mon</button>
+        <button data-day="Tuesday">Tue</button>
+        <button data-day="Wednesday">Wed</button>
+        <button data-day="Thursday">Thu</button>
+        <button data-day="Friday">Fri</button>
+        <button data-day="Saturday">Sat</button>
+        <button data-day="Sunday">Sun</button>
+      </div>
+      <div class="filters">
+        <label for="sportFilter" class="muted" style="align-self:center">Sport</label>
+        <select id="sportFilter">
+          <option value="All">All sports</option>
+          <option value="Football">Football</option>
+          <option value="Basketball">Basketball</option>
+          <option value="Tennis">Tennis</option>
+          <option value="Swimming">Swimming</option>
+          <option value="Running">Running</option>
+          <option value="Volleyball">Volleyball</option>
+        </select>
+      </div>
+    </div>
+
+
+    <section class="planner" id="planner">
+      <div class="section-heading" style="margin-top:0">
+        <h2 id="formTitle">Add a session</h2>
+        <button type="button" id="showToday">Show today</button>
+      </div>
+      <form id="eventForm">
+        <div class="planner-grid">
+          <label>Day
+            <select id="eventDay" required>
+              <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+              <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+            </select>
+          </label>
+          <label>Sport
+            <select id="eventSport" required>
+              <option>Football</option><option>Basketball</option><option>Tennis</option>
+              <option>Swimming</option><option>Running</option><option>Volleyball</option><option>Other</option>
+            </select>
+          </label>
+          <label>Time
+            <input id="eventTime" type="text" placeholder="16:00–17:30" required>
+          </label>
+          <label>Activity name
+            <input id="eventTitle" type="text" placeholder="e.g. Training or match" required maxlength="100">
+          </label>
+          <label>Location
+            <input id="eventPlace" type="text" placeholder="e.g. Sports hall" maxlength="120">
+          </label>
+          <label>Status
+            <select id="eventStatus"><option value="planned">Planned</option><option value="done">Completed</option><option value="cancelled">Cancelled</option></select>
+          </label>
+        </div>
+        <div class="planner-actions">
+          <button type="submit" id="saveEvent">Add session</button>
+          <button type="button" id="cancelEdit" hidden>Stop editing</button>
+        </div>
+        <div id="saveNotice" role="status">Your changes are saved in this browser.</div>
+      </form>
+      <div class="backup-actions">
+        <button type="button" id="exportData">Export backup</button>
+        <label style="display:inline-flex; flex-direction:row; align-items:center; gap:8px; color:var(--text)">Import backup
+          <input type="file" id="importData" accept="application/json,.json" style="max-width:220px">
+        </label>
+        <button type="button" id="resetData">Reset sample timetable</button>
+      </div>
+    </section>
+
+    <div class="section-heading">
+      <h2 id="scheduleTitle">This week's timetable</h2>
+      <span class="muted" id="eventCount">0 sessions</span>
+    </div>
+    <section class="schedule" id="schedule" aria-live="polite"></section>
+
+    <div class="note">
+      <strong style="color:var(--text)">Your timetable, your day:</strong> Add, edit, complete, cancel, or delete sessions above.
+      Changes are saved in this browser on this device. Use Export backup occasionally to keep a copy, or Import backup to restore one.
+      Browser storage can be cleared, so exporting a backup is recommended.
+    </div>
+  </main>
+
+  <footer>SPORTTIME · Sample schedule · Times shown in local time</footer>
+
+  <script>
+    const defaultEvents = [
+      { id: crypto.randomUUID(), day: "Monday", time: "16:00–17:30", sport: "Football", icon: "⚽", title: "Team training", place: "Main football field", color: "#8bff6a", status: "planned" },
+      { id: crypto.randomUUID(), day: "Monday", time: "18:00–19:00", sport: "Basketball", icon: "🏀", title: "Skills practice", place: "Indoor sports hall", color: "#ffad66", status: "planned" },
+      { id: crypto.randomUUID(), day: "Tuesday", time: "07:30–08:15", sport: "Running", icon: "🏃", title: "Morning run", place: "Park track", color: "#6bdcff", status: "planned" },
+      { id: crypto.randomUUID(), day: "Tuesday", time: "17:00–18:30", sport: "Tennis", icon: "🎾", title: "Court practice", place: "Court 2", color: "#e3f56a", status: "planned" },
+      { id: crypto.randomUUID(), day: "Wednesday", time: "16:30–18:00", sport: "Volleyball", icon: "🏐", title: "Team drills", place: "Indoor sports hall", color: "#d5a0ff", status: "planned" },
+      { id: crypto.randomUUID(), day: "Wednesday", time: "18:15–19:15", sport: "Swimming", icon: "🏊", title: "Pool session", place: "Community pool", color: "#6bdcff", status: "planned" },
+      { id: crypto.randomUUID(), day: "Thursday", time: "16:00–17:30", sport: "Football", icon: "⚽", title: "Tactics & passing", place: "Main football field", color: "#8bff6a", status: "planned" },
+      { id: crypto.randomUUID(), day: "Thursday", time: "18:00–19:00", sport: "Basketball", icon: "🏀", title: "Friendly match", place: "Indoor sports hall", color: "#ffad66", status: "planned" },
+      { id: crypto.randomUUID(), day: "Friday", time: "17:00–18:00", sport: "Tennis", icon: "🎾", title: "Match practice", place: "Court 1", color: "#e3f56a", status: "planned" },
+      { id: crypto.randomUUID(), day: "Saturday", time: "09:00–10:00", sport: "Running", icon: "🏃", title: "Group run", place: "Park entrance", color: "#6bdcff", status: "planned" },
+      { id: crypto.randomUUID(), day: "Saturday", time: "11:00–12:30", sport: "Football", icon: "⚽", title: "Weekend match", place: "Main football field", color: "#8bff6a", status: "planned" },
+      { id: crypto.randomUUID(), day: "Sunday", time: "10:00–11:00", sport: "Swimming", icon: "🏊", title: "Open swim", place: "Community pool", color: "#6bdcff", status: "planned" }
+    ];
+
+    const STORAGE_KEY = "sporttime-events-v2";
+    const sportMeta = {
+      Football: ["⚽", "#8bff6a"], Basketball: ["🏀", "#ffad66"],
+      Tennis: ["🎾", "#e3f56a"], Swimming: ["🏊", "#6bdcff"],
+      Running: ["🏃", "#6bdcff"], Volleyball: ["🏐", "#d5a0ff"],
+      Other: ["📌", "#b7c4df"]
+    };
+    let events;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      events = saved ? JSON.parse(saved) : defaultEvents;
+      if (!Array.isArray(events)) events = defaultEvents;
+    } catch { events = defaultEvents; }
+    let selectedDay = "All";
+    let editingId = null;
+    const schedule = document.getElementById("schedule");
+    const sportFilter = document.getElementById("sportFilter");
+    const eventCount = document.getElementById("eventCount");
+    const scheduleTitle = document.getElementById("scheduleTitle");
+    const form = document.getElementById("eventForm");
+    const formTitle = document.getElementById("formTitle");
+    const saveButton = document.getElementById("saveEvent");
+    const cancelEdit = document.getElementById("cancelEdit");
+    const dayInput = document.getElementById("eventDay");
+    const sportInput = document.getElementById("eventSport");
+    const timeInput = document.getElementById("eventTime");
+    const titleInput = document.getElementById("eventTitle");
+    const placeInput = document.getElementById("eventPlace");
+    const statusInput = document.getElementById("eventStatus");
+    const notice = document.getElementById("saveNotice");
+
+    function saveEvents() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+        notice.textContent = "✓ Changes saved on this device";
+      } catch {
+        notice.textContent = "Could not save automatically. Check your browser storage settings.";
+      }
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function renderSchedule() {
+      const selectedSport = sportFilter.value;
+      const filtered = events.filter(event =>
+        (selectedDay === "All" || event.day === selectedDay) &&
+        (selectedSport === "All" || event.sport === selectedSport)
+      );
+      scheduleTitle.textContent = selectedDay === "All" ? "This week's timetable" : `${selectedDay}'s timetable`;
+      eventCount.textContent = `${filtered.length} ${filtered.length === 1 ? "session" : "sessions"}`;
+      schedule.innerHTML = "";
+      if (!filtered.length) {
+        schedule.innerHTML = '<div class="empty">No sessions found. Add a session or try another day or sport.</div>';
+        return;
+      }
+      const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      filtered.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day) ||
+        (a.time || "").localeCompare(b.time || ""));
+      filtered.forEach(event => {
+        const meta = sportMeta[event.sport] || sportMeta.Other;
+        const card = document.createElement("article");
+        card.className = "event" + (event.status === "done" ? " completed" : "");
+        card.style.setProperty("--sport-color", event.color || meta[1]);
+        card.innerHTML = `
+          <div class="event-top">
+            <span class="sport-tag">${escapeHTML(event.day)}</span>
+            <span class="sport-icon" aria-hidden="true">${escapeHTML(event.icon || meta[0])}</span>
+          </div>
+          <h3>${escapeHTML(event.title)}</h3>
+          <p class="event-time">${escapeHTML(event.time)}</p>
+          <p>${escapeHTML(event.sport)} · ${escapeHTML(event.place || "Location not set")}</p>
+          <p class="status-text">${event.status === "done" ? "✓ Completed" : event.status === "cancelled" ? "✕ Cancelled" : "○ Planned"}</p>
+          <div class="event-actions">
+            <button type="button" data-action="edit" data-id="${escapeHTML(event.id)}">Edit</button>
+            <button type="button" data-action="done" data-id="${escapeHTML(event.id)}">${event.status === "done" ? "Undo done" : "Complete"}</button>
+            <button type="button" data-action="cancel" data-id="${escapeHTML(event.id)}">${event.status === "cancelled" ? "Restore" : "Cancel"}</button>
+            <button type="button" data-action="delete" data-id="${escapeHTML(event.id)}" class="danger">Delete</button>
+          </div>`;
+        schedule.appendChild(card);
+      });
+    }
+
+    function resetForm() {
+      editingId = null;
+      form.reset();
+      dayInput.value = selectedDay !== "All" ? selectedDay : "Monday";
+      statusInput.value = "planned";
+      formTitle.textContent = "Add a session";
+      saveButton.textContent = "Add session";
+      cancelEdit.hidden = true;
+    }
+
+    function beginEdit(event) {
+      editingId = event.id;
+      dayInput.value = event.day;
+      sportInput.value = event.sport;
+      timeInput.value = event.time || "";
+      titleInput.value = event.title || "";
+      placeInput.value = event.place || "";
+      statusInput.value = event.status || "planned";
+      formTitle.textContent = "Edit session";
+      saveButton.textContent = "Save changes";
+      cancelEdit.hidden = false;
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      titleInput.focus();
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const sport = sportInput.value;
+      const meta = sportMeta[sport] || sportMeta.Other;
+      const entry = {
+        id: editingId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+        day: dayInput.value, sport, time: timeInput.value,
+        title: titleInput.value.trim(), place: placeInput.value.trim(),
+        icon: meta[0], color: meta[1], status: statusInput.value
+      };
+      if (editingId) events = events.map(item => item.id === editingId ? entry : item);
+      else events.push(entry);
+      saveEvents();
+      selectedDay = entry.day;
+      document.querySelectorAll("#dayButtons button").forEach(button =>
+        button.classList.toggle("active", button.dataset.day === selectedDay));
+      sportFilter.value = "All";
+      resetForm();
+      renderSchedule();
+    });
+
+    cancelEdit.addEventListener("click", resetForm);
+    document.getElementById("dayButtons").addEventListener("click", event => {
+      const button = event.target.closest("button[data-day]");
+      if (!button) return;
+      selectedDay = button.dataset.day;
+      document.querySelectorAll("#dayButtons button").forEach(item =>
+        item.classList.toggle("active", item === button));
+      dayInput.value = selectedDay !== "All" ? selectedDay : "Monday";
+      renderSchedule();
+    });
+    sportFilter.addEventListener("change", renderSchedule);
+
+    schedule.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const item = events.find(entry => entry.id === button.dataset.id);
+      if (!item) return;
+      switch (button.dataset.action) {
+        case "edit": beginEdit(item); break;
+        case "done": item.status = item.status === "done" ? "planned" : "done"; saveEvents(); renderSchedule(); break;
+        case "cancel": item.status = item.status === "cancelled" ? "planned" : "cancelled"; saveEvents(); renderSchedule(); break;
+        case "delete":
+          if (confirm(`Delete "${item.title}"?`)) {
+            events = events.filter(entry => entry.id !== item.id);
+            if (editingId === item.id) resetForm();
+            saveEvents(); renderSchedule();
+          }
+          break;
+      }
+    });
+
+    document.getElementById("todayLabel").textContent =
+      new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date());
+    document.getElementById("showToday").addEventListener("click", () => {
+      const today = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date());
+      selectedDay = today;
+      document.querySelectorAll("#dayButtons button").forEach(button =>
+        button.classList.toggle("active", button.dataset.day === selectedDay));
+      dayInput.value = today;
+      sportFilter.value = "All";
+      renderSchedule();
+    });
+    document.getElementById("exportData").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "sporttime-backup.json"; a.click();
+      URL.revokeObjectURL(url);
+    });
+    document.getElementById("importData").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          if (!Array.isArray(imported) || imported.some(item => !item.day || !item.title || !item.sport)) throw new Error();
+          events = imported.map(item => ({ ...item, id: item.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())) }));
+          saveEvents(); renderSchedule();
+          notice.textContent = "✓ Backup imported successfully";
+        } catch { alert("That file does not look like a valid SPORTTIME backup."); }
+        event.target.value = "";
+      };
+      reader.readAsText(file);
+    });
+    document.getElementById("resetData").addEventListener("click", () => {
+      if (!confirm("Reset your timetable to the original sample sessions? This replaces your current saved sessions.")) return;
+      events = defaultEvents.map(item => ({ ...item, id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()) }));
+      saveEvents(); resetForm(); renderSchedule();
+    });
+    renderSchedule();
+  </script>
+</body>
+</html>
